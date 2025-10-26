@@ -1,5 +1,5 @@
 import csv
-from typing import List
+from typing import List, Optional
 
 from simple_fuzzy import QualityAssessment
 from src.Types import EnvironmentalSample
@@ -87,25 +87,63 @@ def _obsluga_trybu_bazy() -> None:
     f = input("Wybierz numer opcji: ").strip()
     kryteria: dict[str, str] = {}
 
+    # przygotuj listy wyboru na podstawie danych
+    strefy = _unikalne_wartosci(dane, "Strefa")
+    sezony = _unikalne_wartosci(dane, "Sezon")
+    pory = _unikalne_wartosci(dane, "Pora_dnia")
+
     if f == "1":
-        kryteria["Strefa"] = input("Podaj strefe (miejska/podmiejska/wiejska/przemyslowa): ")
+        wybor = _wybierz_z_listy("Wybierz strefe", strefy)
+        if wybor is None:
+            print("Anulowano.")
+            return
+        kryteria["Strefa"] = wybor
     elif f == "2":
-        kryteria["Sezon"] = input("Podaj sezon (wiosna/lato/jesien/zima): ")
+        wybor = _wybierz_z_listy("Wybierz sezon", sezony)
+        if wybor is None:
+            print("Anulowano.")
+            return
+        kryteria["Sezon"] = wybor
     elif f == "3":
-        kryteria["Pora_dnia"] = input("Podaj pore dnia (rano/poludnie/popoludnie/noc): ")
+        wybor = _wybierz_z_listy("Wybierz pore dnia", pory)
+        if wybor is None:
+            print("Anulowano.")
+            return
+        kryteria["Pora_dnia"] = wybor
     elif f == "4":
-        kryteria["Strefa"] = input("Strefa: ")
-        kryteria["Sezon"] = input("Sezon: ")
+        w1 = _wybierz_z_listy("Wybierz strefe", strefy)
+        w2 = _wybierz_z_listy("Wybierz sezon", sezony)
+        if w1 is None or w2 is None:
+            print("Anulowano.")
+            return
+        kryteria["Strefa"] = w1
+        kryteria["Sezon"] = w2
     elif f == "5":
-        kryteria["Sezon"] = input("Sezon: ")
-        kryteria["Pora_dnia"] = input("Pora dnia: ")
+        w1 = _wybierz_z_listy("Wybierz sezon", sezony)
+        w2 = _wybierz_z_listy("Wybierz pore dnia", pory)
+        if w1 is None or w2 is None:
+            print("Anulowano.")
+            return
+        kryteria["Sezon"] = w1
+        kryteria["Pora_dnia"] = w2
     elif f == "6":
-        kryteria["Strefa"] = input("Strefa: ")
-        kryteria["Pora_dnia"] = input("Pora dnia: ")
+        w1 = _wybierz_z_listy("Wybierz strefe", strefy)
+        w2 = _wybierz_z_listy("Wybierz pore dnia", pory)
+        if w1 is None or w2 is None:
+            print("Anulowano.")
+            return
+        kryteria["Strefa"] = w1
+        kryteria["Pora_dnia"] = w2
     elif f == "7":
-        kryteria["Strefa"] = input("Strefa: ")
-        kryteria["Sezon"] = input("Sezon: ")
-        kryteria["Pora_dnia"] = input("Pora dnia: ")
+        w1 = _wybierz_z_listy("Wybierz strefe", strefy)
+        w2 = _wybierz_z_listy("Wybierz sezon", sezony)
+        w3 = _wybierz_z_listy("Wybierz pore dnia", pory)
+        if w1 is None or w2 is None or w3 is None:
+            print("Anulowano.")
+            return
+        kryteria["Strefa"] = w1
+        kryteria["Sezon"] = w2
+        kryteria["Pora_dnia"] = w3
 
     wyniki = filtruj_baze(dane, kryteria)
 
@@ -119,6 +157,33 @@ def _obsluga_trybu_bazy() -> None:
         sample = EnvironmentalSample.from_csv_row(rekord)
         wynik = sample.evaluate()
         _pokaz_rekord(rekord, wynik)
+
+
+def _unikalne_wartosci(dane: List[dict[str, str]], kolumna: str) -> List[str]:
+    wartosci = {
+        (rekord.get(kolumna, "") or "").strip()
+        for rekord in dane
+        if (rekord.get(kolumna, "") or "").strip()
+    }
+    return sorted(wartosci, key=lambda s: s.lower())
+
+
+def _wybierz_z_listy(tresc: str, opcje: List[str]) -> Optional[str]:
+    if not opcje:
+        print("Brak dostępnych opcji.")
+        return None
+    print(f"\n{tresc}:")
+    for i, val in enumerate(opcje, 1):
+        print(f"{i}) {val}")
+    while True:
+        wybor = input("Wybierz numer (ENTER aby anulować): ").strip()
+        if wybor == "":
+            return None
+        if wybor.isdigit():
+            idx = int(wybor)
+            if 1 <= idx <= len(opcje):
+                return opcje[idx - 1]
+        print("Nieprawidłowy wybór, spróbuj ponownie.")
 
 
 def _pokaz_wynik(wynik: QualityAssessment) -> None:
