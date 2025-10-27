@@ -1,11 +1,14 @@
+﻿
+
 import csv
 from typing import List, Optional
 
 from simple_fuzzy import QualityAssessment
-from src.types import EnvironmentalSample
+from src.Types import EnvironmentalSample
 
 
 def wczytaj_baze(sciezka: str = "data/data.csv") -> List[dict[str, str]]:
+    """Load CSV into a list of dicts (expects UTF-8)."""
     dane: List[dict[str, str]] = []
     try:
         with open(sciezka, encoding="utf-8") as f:
@@ -18,6 +21,7 @@ def wczytaj_baze(sciezka: str = "data/data.csv") -> List[dict[str, str]]:
 
 
 def filtruj_baze(dane: List[dict[str, str]], kryteria: dict[str, str]) -> List[dict[str, str]]:
+    """Return records matching all equality criteria (case-insensitive)."""
     wyniki: List[dict[str, str]] = []
     for rekord in dane:
         dopasowanie = True
@@ -31,6 +35,7 @@ def filtruj_baze(dane: List[dict[str, str]], kryteria: dict[str, str]) -> List[d
 
 
 def ui() -> None:
+    """Main UI menu and flow dispatcher."""
     print("=== SYSTEM EKSPERTOWY: JAKOSC SRODOWISKA ===")
     print("1) Podaj wlasne parametry pogodowe")
     print("2) Uzyj danych z bazy (CSV)")
@@ -48,6 +53,7 @@ def ui() -> None:
 
 
 def _obsluga_trybu_recznego() -> None:
+    """Read values from stdin, evaluate and print result."""
     try:
         pm25 = float(input("PM2.5 (ug/m3): "))
         wiatr = float(input("Predkosc wiatru (m/s): "))
@@ -71,6 +77,7 @@ def _obsluga_trybu_recznego() -> None:
 
 
 def _obsluga_trybu_bazy() -> None:
+    """Load CSV, let user filter and evaluate matching records."""
     dane = wczytaj_baze()
     if not dane:
         return
@@ -87,7 +94,6 @@ def _obsluga_trybu_bazy() -> None:
     f = input("Wybierz numer opcji: ").strip()
     kryteria: dict[str, str] = {}
 
-    # przygotuj listy wyboru na podstawie danych
     strefy = _unikalne_wartosci(dane, "Strefa")
     sezony = _unikalne_wartosci(dane, "Sezon")
     pory = _unikalne_wartosci(dane, "Pora_dnia")
@@ -160,6 +166,7 @@ def _obsluga_trybu_bazy() -> None:
 
 
 def _unikalne_wartosci(dane: List[dict[str, str]], kolumna: str) -> List[str]:
+    """Return sorted unique values of column (case-insensitive)."""
     wartosci = {
         (rekord.get(kolumna, "") or "").strip()
         for rekord in dane
@@ -169,28 +176,31 @@ def _unikalne_wartosci(dane: List[dict[str, str]], kolumna: str) -> List[str]:
 
 
 def _wybierz_z_listy(tresc: str, opcje: List[str]) -> Optional[str]:
+    """Show numbered options and return chosen value; ENTER cancels."""
     if not opcje:
-        print("Brak dostępnych opcji.")
+        print("Brak dostepnych opcji.")
         return None
     print(f"\n{tresc}:")
     for i, val in enumerate(opcje, 1):
         print(f"{i}) {val}")
     while True:
-        wybor = input("Wybierz numer (ENTER aby anulować): ").strip()
+        wybor = input("Wybierz numer (ENTER aby anulowac): ").strip()
         if wybor == "":
             return None
         if wybor.isdigit():
             idx = int(wybor)
             if 1 <= idx <= len(opcje):
                 return opcje[idx - 1]
-        print("Nieprawidłowy wybór, spróbuj ponownie.")
+        print("Nieprawidlowy wybor, sprobuj ponownie.")
 
 
 def _pokaz_wynik(wynik: QualityAssessment) -> None:
+    """Print label and index for a single evaluation result."""
     print(f"\nWynik oceny srodowiska: {wynik.label} (indeks {wynik.index})")
 
 
 def _pokaz_rekord(rekord: dict[str, str], wynik: QualityAssessment) -> None:
+    """Print CSV record summary and fuzzy evaluation result."""
     print(
         f"Strefa: {rekord['Strefa']}, Sezon: {rekord['Sezon']}, "
         f"Pora_dnia: {rekord['Pora_dnia']}"
