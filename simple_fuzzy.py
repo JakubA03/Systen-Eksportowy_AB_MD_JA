@@ -14,11 +14,9 @@ Wejścia (uniwersa):
 """
 
 from __future__ import annotations
-
 from dataclasses import dataclass
 from functools import lru_cache
-
-import numpy as np
+import numpy as np  #dla uniwersów zmiennych lingwistycznych
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 
@@ -56,7 +54,7 @@ def ocena_jakosci(
     simulation.input["wind"] = wiatr
     simulation.input["temperature"] = temperatura
     simulation.input["humidity"] = wilgotnosc
-    simulation.compute()
+    simulation.compute() # uruchomienie symulacji i wnioskowania mandamiego z biblioteki skfuzzy
 
     score = float(simulation.output["quality"])
     label = _label_for_score(score)
@@ -72,9 +70,9 @@ def _build_control_system() -> ctrl.ControlSystem:
     ControlSystem, który jest następnie użyty w symulacji.
     """
     # PM2.5 [µg/m³] – uniwersum 0..200, zbiory: very_low..very_high
-    pm25 = ctrl.Antecedent(np.linspace(0, 200, 201), "pm25")
+    pm25 = ctrl.Antecedent(np.linspace(0, 200, 201), "pm25")#tworzenie zmiennej lingwistycznej i sieci wartości od 0 do 200
     # bardzo niskie (trapez: pełna przynależność przy 0..5, wygaszanie do 12)
-    pm25["very_low"] = fuzz.trapmf(pm25.universe, [0, 0, 5, 12])
+    pm25["very_low"] = fuzz.trapmf(pm25.universe, [0, 0, 5, 12])#lewe ramię trapezu
     # niskie / umiarkowane / wysokie (krzywe Gaussa wokół 20/35/60)
     pm25["low"] = fuzz.gaussmf(pm25.universe, 20, 6)
     pm25["moderate"] = fuzz.gaussmf(pm25.universe, 35, 8)
@@ -83,7 +81,7 @@ def _build_control_system() -> ctrl.ControlSystem:
     pm25["very_high"] = fuzz.trapmf(pm25.universe, [80, 100, 200, 200])
 
     # Wiatr [m/s] – 0..18
-    wind = ctrl.Antecedent(np.linspace(0, 18, 181), "wind")
+    wind = ctrl.Antecedent(np.linspace(0, 18, 181), "wind") 
     wind["calm"] = fuzz.trapmf(wind.universe, [0, 0, 0.6, 1.2])
     wind["breeze"] = fuzz.gaussmf(wind.universe, 2.0, 0.8)
     wind["windy"] = fuzz.gaussmf(wind.universe, 4.0, 1.2)

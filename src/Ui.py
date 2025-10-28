@@ -4,7 +4,7 @@ import csv
 from typing import List, Optional
 
 from simple_fuzzy import QualityAssessment
-from src.Types import EnvironmentalSample
+from src.types import EnvironmentalSample
 
 
 def wczytaj_baze(sciezka: str = "data/data.csv") -> List[dict[str, str]]:
